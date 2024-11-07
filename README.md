@@ -1,1 +1,0 @@
-# schedule-management-app
