@@ -1,3 +1,4 @@
+// server.dart
 import 'dart:async';
 import 'dart:io';
 import 'package:shelf/shelf.dart';
@@ -11,6 +12,12 @@ import 'fortest.dart';
 import 'todo_controller.dart';
 
 void main() async {
+  // 로그 파일 생성
+  final DateTime now = DateTime.now();
+  final logFileName =
+      'server_logs/${now.toIso8601String().replaceAll(':', '-')}.txt';
+  final logFile = await initializeLogFile(logFileName);
+
   // SQLite 데이터베이스 초기화
   final database = sqlite3.open('example.db');
   initializeDatabase(database);
@@ -18,11 +25,33 @@ void main() async {
   // 요청 핸들러 생성
   var handler = const Pipeline()
       .addMiddleware(logRequests())
+      .addMiddleware((innerHandler) => (request) async {
+            // 요청 로그 작성
+            final logEntry =
+                '[${DateTime.now()}] ${request.method} ${request.requestedUri}\n';
+            await logFile.writeAsString(logEntry, mode: FileMode.append);
+            final response = await innerHandler(request);
+
+            // 응답 로그 작성
+            final responseLog =
+                '[${DateTime.now()}] Response: ${response.statusCode}\n\n';
+            await logFile.writeAsString(responseLog, mode: FileMode.append);
+            return response;
+          })
       .addHandler((request) => router(request, database));
 
   // 서버 실행
   var server = await io.serve(handler, InternetAddress.anyIPv4, 8080);
   print('Server listening on port ${server.port}');
+}
+
+Future<File> initializeLogFile(String logFileName) async {
+  final logDirectory = Directory('server_logs');
+  if (!await logDirectory.exists()) {
+    await logDirectory.create();
+  }
+  final logFile = File(logFileName);
+  return await logFile.create();
 }
 
 void initializeDatabase(Database db) {
