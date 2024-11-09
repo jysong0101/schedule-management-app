@@ -1,0 +1,10 @@
+name: schedule_management_server
+description: dart server.
+version: 1.0.0
+
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+
+dependencies:
+  shelf: ^1.4.0
+  sqlite3: ^1.4.0

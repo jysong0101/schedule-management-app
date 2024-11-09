@@ -1,0 +1,299 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Dart Schedule Management API",
+    "version": "1.0.0",
+    "description": "API documentation for Schedule Management with user-based access"
+  },
+  "paths": {
+    "/time": {
+      "get": {
+        "summary": "Get current time",
+        "responses": {
+          "200": {
+            "description": "Returns the current UTC time"
+          }
+        }
+      }
+    },
+    "/user": {
+      "post": {
+        "summary": "Add a new user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "description": "Unique user ID" },
+                  "name": { "type": "string", "description": "User's name" }
+                },
+                "required": ["id", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "User added successfully" },
+          "400": { "description": "User ID must be unique" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Get all users",
+        "responses": {
+          "200": {
+            "description": "Returns a list of all users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule": {
+      "post": {
+        "summary": "Add a new schedule for a user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": { "type": "string", "description": "User ID associated with the schedule" },
+                  "name": { "type": "string", "description": "Schedule name" },
+                  "start_date": { "type": "string", "format": "date", "description": "Start date of the schedule" },
+                  "end_date": { "type": "string", "format": "date", "description": "End date of the schedule" },
+                  "details": { "type": "string", "description": "Details about the schedule" },
+                  "completed": { "type": "boolean", "description": "Completion status of the schedule" }
+                },
+                "required": ["user_id", "name", "start_date", "end_date", "completed"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Schedule added successfully" },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/schedule/{id}/toggle": {
+      "patch": {
+        "summary": "Toggle completion status of a schedule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule completion status toggled successfully"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
+        }
+      }
+    },
+    "/schedule/{id}": {
+      "delete": {
+        "summary": "Delete a schedule by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule deleted successfully"
+          },
+          "404": {
+            "description": "Schedule not found"
+          }
+        }
+      }
+    },
+    "/priorities": {
+      "get": {
+        "summary": "Get schedules within x days for a specific user",
+        "parameters": [
+          {
+            "name": "x",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedules retrieved successfully within x days for the specified user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" },
+                      "start_date": { "type": "string", "format": "date" },
+                      "end_date": { "type": "string", "format": "date" },
+                      "details": { "type": "string" },
+                      "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/todo/today": {
+      "get": {
+        "summary": "Get schedules ending today",
+        "description": "Retrieve all schedules that end today.",
+        "responses": {
+          "200": {
+            "description": "Schedules ending today",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "user_id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "start_date": { "type": "string", "format": "date" },
+                      "end_date": { "type": "string", "format": "date" },
+                      "details": { "type": "string" },
+                      "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/todo/week": {
+      "get": {
+        "summary": "Get schedules ending this week",
+        "description": "Retrieve all schedules that end within the current week.",
+        "responses": {
+          "200": {
+            "description": "Schedules ending this week",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "user_id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "start_date": { "type": "string", "format": "date" },
+                      "end_date": { "type": "string", "format": "date" },
+                      "details": { "type": "string" },
+                      "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/todo/month": {
+      "get": {
+        "summary": "Get schedules ending this month",
+        "description": "Retrieve all schedules that end within the current month.",
+        "responses": {
+          "200": {
+            "description": "Schedules ending this month",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "user_id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "start_date": { "type": "string", "format": "date" },
+                      "end_date": { "type": "string", "format": "date" },
+                      "details": { "type": "string" },
+                      "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fortest/all-schedules": {
+      "get": {
+        "summary": "Get all schedules for testing",
+        "description": "Retrieve all schedules (ignores user).",
+        "responses": {
+          "200": {
+            "description": "All schedules retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "user_id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "start_date": { "type": "string", "format": "date" },
+                      "end_date": { "type": "string", "format": "date" },
+                      "details": { "type": "string" },
+                      "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
