@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'todo_screen.dart';
+
+const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
 class ScheduleScreen extends StatefulWidget {
   final String userId;
@@ -13,14 +16,159 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
+  int _currentIndex = 0; // 화면 전환을 위한 상태 변수
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<Map<String, dynamic>> _schedules = [];
 
+  late TodoScreen todoScreen; // TodoScreen 인스턴스 선언
+
   @override
   void initState() {
     super.initState();
+    todoScreen = TodoScreen(userId: widget.userId); // TodoScreen 초기화
     _fetchSchedulesForDate(DateTime.now());
+  }
+
+  Future<void> _toggleCompletion(int scheduleId, bool isCompleted) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/schedule/$scheduleId/toggle'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'completed': isCompleted}),
+      );
+
+      if (response.statusCode == 200) {
+        print('Schedule completion toggled successfully.');
+      } else {
+        print(
+            'Failed to toggle schedule completion. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error toggling schedule completion: $e');
+    }
+  }
+
+  void _showMenuModal() async {
+    int achievement = await _fetchAchievement();
+    List<Map<String, dynamic>> priorities = await _fetchPriorities();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.6, // 화면 높이의 60%로 제한
+          padding: const EdgeInsets.all(30.0), // 여백을 추가
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Today's Achievement",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 16),
+                LinearProgressIndicator(
+                  value: achievement / 100,
+                  backgroundColor: Colors.grey[300],
+                  color: Colors.blue,
+                ),
+                SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    '$achievement%',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Priorities',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                // 완료되지 않은 Priority만 표시
+                ...priorities
+                    .where((priority) => !(priority['completed'] ?? false))
+                    .map((priority) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Container(
+                      padding: EdgeInsets.all(12.0),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(priority['name'],
+                              style: TextStyle(fontSize: 16)),
+                          Text(priority['end_date'],
+                              style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+                SizedBox(height: 24),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      print('Settings pressed');
+                    },
+                    child: Text('Settings'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<int> _fetchAchievement() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/todo/today?user_id=${widget.userId}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        int completedCount =
+            data.where((item) => item['completed'] == true).length;
+        return ((completedCount / data.length) * 100).floor();
+      } else {
+        print('Failed to fetch achievement.');
+        return 0;
+      }
+    } catch (e) {
+      print('Error fetching achievement: $e');
+      return 0;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchPriorities() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/priorities?user_id=${widget.userId}&x=3'),
+      );
+
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(json.decode(response.body));
+      } else {
+        print('Failed to fetch priorities.');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching priorities: $e');
+      return [];
+    }
   }
 
   Future<void> _fetchSchedulesForDate(DateTime date) async {
@@ -30,7 +178,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     try {
       final response = await http.get(
         Uri.parse(
-            'http://172.30.1.12:8080/schedule?user_id=${widget.userId}&date=$formattedDate'),
+            '$baseUrl/schedule?user_id=${widget.userId}&date=$formattedDate'),
       );
 
       if (response.statusCode == 200) {
@@ -69,7 +217,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.0)),
       ),
       builder: (context) {
-        return Padding(
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.6, // 화면 높이의 60%
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             top: 16,
@@ -148,7 +297,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Future<void> _deleteSchedule(int scheduleId) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://172.30.1.12:8080/schedule/$scheduleId'),
+        Uri.parse('$baseUrl/schedule/$scheduleId'),
       );
 
       if (response.statusCode == 200) {
@@ -179,7 +328,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           builder: (context, setState) {
             return Padding(
               padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom, top: 16),
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                top: 16,
+              ),
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -297,14 +448,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                       ),
                       SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (nameController.text.isNotEmpty) {
-                            _addSchedule(
+                            await _addSchedule(
                               nameController.text,
                               startDate ?? DateTime.now(),
                               endDate ?? DateTime.now(),
                               detailsController.text,
                             );
+                            // ToDoScreen 상태 새로고침
+                            await todoScreen
+                                .fetchTodos(); // todoScreen의 fetchTodos 호출
                             Navigator.pop(context);
                           }
                         },
@@ -331,7 +485,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
           "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
 
       final response = await http.post(
-        Uri.parse('http://172.30.1.12:8080/schedule'),
+        Uri.parse('$baseUrl/schedule'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': widget.userId,
@@ -358,121 +512,148 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Schedule for ${widget.userId}'),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.menu, color: Colors.black),
+          onPressed: _showMenuModal,
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.cached, color: Colors.black),
+            onPressed: () async {
+              // 화면 전환 시 ToDo 화면 새로고침
+              if (_currentIndex == 0) {
+                await todoScreen.fetchTodos(); // 기존 TodoScreen에서 fetchTodos 호출
+              } else {
+                await _fetchSchedulesForDate(_selectedDay ?? _focusedDay);
+              }
+
+              setState(() {
+                _currentIndex = 1 - _currentIndex; // 화면 전환 (0 <-> 1)
+              });
+            },
+          ),
+        ],
+        centerTitle: true,
       ),
-      body: Column(
+      body: IndexedStack(
+        index: _currentIndex,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TableCalendar(
-              firstDay: DateTime.utc(2020, 1, 1),
-              lastDay: DateTime.utc(2030, 12, 31),
-              focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDay = selectedDay;
-                  _focusedDay = focusedDay;
-                });
-                _fetchSchedulesForDate(selectedDay);
-              },
-              calendarStyle: CalendarStyle(
-                todayDecoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                selectedDecoration: BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              headerStyle: HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true, // 타이틀 중앙 정렬
-                titleTextStyle: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Schedules',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: _schedules.isEmpty
-                ? Center(
-                    child: Text(
-                      'No schedules for the selected date.',
-                      style: TextStyle(fontSize: 16.0, color: Colors.grey),
+          // 첫 번째 화면: Schedule 화면
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TableCalendar(
+                  firstDay: DateTime.utc(2020, 1, 1),
+                  lastDay: DateTime.utc(2030, 12, 31),
+                  focusedDay: _focusedDay,
+                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                    _fetchSchedulesForDate(selectedDay);
+                  },
+                  calendarStyle: CalendarStyle(
+                    todayDecoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: _schedules.length,
-                    itemBuilder: (context, index) {
-                      final schedule = _schedules[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
+                    selectedDecoration: BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: false,
+                    titleCentered: true,
+                    titleTextStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Schedules',
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: _schedules.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No schedules for the selected date.',
+                          style: TextStyle(fontSize: 16.0, color: Colors.grey),
                         ),
-                        child: Center(
-                          child: Container(
-                            width: MediaQuery.of(context).size.width * 0.85,
-                            height: 80.0,
-                            decoration: BoxDecoration(
-                              color: Colors.blue[50],
-                              borderRadius: BorderRadius.circular(8.0),
-                              border: Border.all(color: Colors.black),
+                      )
+                    : ListView.builder(
+                        itemCount: _schedules.length,
+                        itemBuilder: (context, index) {
+                          final schedule = _schedules[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
                             ),
-                            child: InkWell(
-                              onTap: () => _showScheduleDetailsModal(schedule),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0),
-                                    child: Text(
-                                      schedule['name'],
-                                      style: TextStyle(fontSize: 16.0),
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.85,
+                              height: 80.0,
+                              decoration: BoxDecoration(
+                                color: Colors.blue[50],
+                                borderRadius: BorderRadius.circular(8.0),
+                                border: Border.all(color: Colors.black),
+                              ),
+                              child: InkWell(
+                                onTap: () =>
+                                    _showScheduleDetailsModal(schedule),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0),
+                                      child: Text(
+                                        schedule['name'],
+                                        style: TextStyle(fontSize: 16.0),
+                                      ),
                                     ),
-                                  ),
-                                  Checkbox(
-                                    value: schedule['completed'],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        schedule['completed'] = value!;
-                                      });
-                                    },
-                                  ),
-                                ],
+                                    Checkbox(
+                                      value: schedule['completed'],
+                                      onChanged: (value) {
+                                        setState(() {
+                                          schedule['completed'] = value!;
+                                        });
+                                        _toggleCompletion(
+                                            schedule['id'], value!);
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
+
+          // 두 번째 화면: ToDo 화면
+          todoScreen, // IndexedStack에 todoScreen 추가
         ],
       ),
       floatingActionButton: FloatingActionButton(
