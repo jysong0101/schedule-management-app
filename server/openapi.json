@@ -11,7 +11,14 @@
         "summary": "Get current time",
         "responses": {
           "200": {
-            "description": "Returns the current UTC time"
+            "description": "Returns the current UTC time",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -79,7 +86,7 @@
                   "details": { "type": "string", "description": "Details about the schedule" },
                   "completed": { "type": "boolean", "description": "Completion status of the schedule" }
                 },
-                "required": ["user_id", "name", "start_date", "end_date", "completed"]
+                "required": ["user_id", "name", "start_date", "end_date"]
               }
             }
           }
@@ -87,6 +94,50 @@
         "responses": {
           "200": { "description": "Schedule added successfully" },
           "404": { "description": "User not found" }
+        }
+      },
+      "get": {
+        "summary": "Get schedules for a specific user on a specific date",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "date" },
+            "description": "The date for which to fetch schedules (format: YYYY-MM-DD)"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "The ID of the user whose schedules are to be fetched"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedules retrieved successfully for the specified date and user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "user_id": { "type": "string" },
+                      "name": { "type": "string" },
+                      "start_date": { "type": "string", "format": "date" },
+                      "end_date": { "type": "string", "format": "date" },
+                      "details": { "type": "string" },
+                      "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Missing date or user_id parameter" }
         }
       }
     },
@@ -160,6 +211,7 @@
                     "type": "object",
                     "properties": {
                       "id": { "type": "integer" },
+                      "user_id": { "type": "string" },
                       "name": { "type": "string" },
                       "start_date": { "type": "string", "format": "date" },
                       "end_date": { "type": "string", "format": "date" },
@@ -178,7 +230,14 @@
     "/todo/today": {
       "get": {
         "summary": "Get schedules ending today",
-        "description": "Retrieve all schedules that end today.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Schedules ending today",
@@ -208,7 +267,14 @@
     "/todo/week": {
       "get": {
         "summary": "Get schedules ending this week",
-        "description": "Retrieve all schedules that end within the current week.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Schedules ending this week",
@@ -238,7 +304,14 @@
     "/todo/month": {
       "get": {
         "summary": "Get schedules ending this month",
-        "description": "Retrieve all schedules that end within the current month.",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Schedules ending this month",
@@ -268,7 +341,6 @@
     "/fortest/all-schedules": {
       "get": {
         "summary": "Get all schedules for testing",
-        "description": "Retrieve all schedules (ignores user).",
         "responses": {
           "200": {
             "description": "All schedules retrieved successfully",
@@ -286,6 +358,77 @@
                       "end_date": { "type": "string", "format": "date" },
                       "details": { "type": "string" },
                       "completed": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/name": {
+      "get": {
+        "summary": "Get username by user ID",
+        "description": "Retrieve the username for a specific user ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the user whose name is to be fetched"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Username retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The ID of the user"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the user"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or missing user ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error message indicating user not found"
                     }
                   }
                 }

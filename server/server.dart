@@ -1,4 +1,3 @@
-// server.dart
 import 'dart:async';
 import 'dart:io';
 import 'package:shelf/shelf.dart';
@@ -55,11 +54,7 @@ Future<File> initializeLogFile(String logFileName) async {
 }
 
 void initializeDatabase(Database db) {
-  // 기존 테이블이 있으면 삭제
-  db.execute('DROP TABLE IF EXISTS schedules');
-  db.execute('DROP TABLE IF EXISTS users');
-
-  // 새 테이블 생성
+  // 기존 테이블이 존재하면 유지 (삭제하지 않음)
   db.execute('''
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -85,37 +80,46 @@ void initializeDatabase(Database db) {
 }
 
 void insertInitialData(Database db) {
-  // 사용자 추가
-  final users = [
-    {'id': 'user1', 'name': 'Alice'},
-    {'id': 'user2', 'name': 'Bob'}
-  ];
+  // 사용자 데이터가 이미 있는지 확인
+  final existingUsers = db.select('SELECT COUNT(*) AS count FROM users');
+  if (existingUsers.first['count'] == 0) {
+    // 사용자 추가
+    final users = [
+      {'id': 'user1', 'name': 'Alice'},
+      {'id': 'user2', 'name': 'Bob'}
+    ];
 
-  for (var user in users) {
-    db.execute('INSERT INTO users (id, name) VALUES (?, ?)',
-        [user['id'], user['name']]);
+    for (var user in users) {
+      db.execute('INSERT INTO users (id, name) VALUES (?, ?)',
+          [user['id'], user['name']]);
+    }
   }
 
-  // 일정 데이터 추가
-  final startDate = DateTime(2024, 11, 1);
-  final endDate = DateTime(2024, 11, 30);
+  // 일정 데이터가 이미 있는지 확인
+  final existingSchedules =
+      db.select('SELECT COUNT(*) AS count FROM schedules');
+  if (existingSchedules.first['count'] == 0) {
+    // 일정 데이터 추가
+    final startDate = DateTime(2024, 11, 1);
+    final endDate = DateTime(2024, 11, 30);
 
-  for (var date = startDate;
-      date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
-      date = date.add(Duration(days: 1))) {
-    for (var i = 1; i <= 2; i++) {
-      final formattedDate =
-          '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      final name = '$formattedDate example$i';
-      final details = '$name for test';
-      final dateString = date.toIso8601String().split('T').first;
+    for (var date = startDate;
+        date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
+        date = date.add(Duration(days: 1))) {
+      for (var i = 1; i <= 2; i++) {
+        final formattedDate =
+            '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+        final name = '$formattedDate example$i';
+        final details = '$name for test';
+        final dateString = date.toIso8601String().split('T').first;
 
-      // 각 사용자마다 동일한 일정을 생성
-      for (var userId in ['user1', 'user2']) {
-        db.execute('''
-          INSERT INTO schedules (user_id, name, start_date, end_date, details, completed)
-          VALUES (?, ?, ?, ?, ?, 0)
-        ''', [userId, name, dateString, dateString, details]);
+        // 각 사용자마다 동일한 일정을 생성
+        for (var userId in ['user1', 'user2']) {
+          db.execute('''
+            INSERT INTO schedules (user_id, name, start_date, end_date, details, completed)
+            VALUES (?, ?, ?, ?, ?, 0)
+          ''', [userId, name, dateString, dateString, details]);
+        }
       }
     }
   }
@@ -128,6 +132,8 @@ FutureOr<Response> router(Request request, Database database) {
     return handleAddUserRequest(request, database);
   } else if (request.url.path == 'users' && request.method == 'GET') {
     return handleGetUsersRequest(database);
+  } else if (request.url.path == 'user/name' && request.method == 'GET') {
+    return handleGetUserNameByIdRequest(request, database);
   } else if (request.url.path == 'schedule' && request.method == 'POST') {
     return handleAddScheduleRequest(request, database);
   } else if (request.url.path == 'schedule' && request.method == 'GET') {
