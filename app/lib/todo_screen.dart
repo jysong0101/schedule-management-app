@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -27,6 +29,10 @@ class _TodoScreenState extends State<TodoScreen> {
   int _completedCount = 0; // 완료된 일정 개수
   int _totalCount = 0; // 전체 일정 개수
   static _TodoScreenState? currentState; // 현재 상태를 추적하기 위한 정적 변수
+  Map<int, Timer?> _timers = {}; // 각 todo의 타이머
+  Map<int, Duration> _elapsedTimes = {}; // 각 todo의 경과 시간
+  Map<int, bool> _isRunning = {}; // 각 todo 타이머 실행 여부
+
   @override
   void initState() {
     super.initState();
@@ -37,10 +43,46 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   void dispose() {
     currentState = null;
+    for (var timer in _timers.values) {
+      timer?.cancel();
+    }
     super.dispose();
   }
 
-  // API 데이터 호출 함수
+  void _resetTimer(int todoId) {
+    setState(() {
+      _timers[todoId]?.cancel(); // 타이머 중지
+      _elapsedTimes[todoId] = Duration.zero; // 경과 시간 초기화
+      _isRunning[todoId] = false; // 실행 상태 초기화
+    });
+  }
+
+  void _toggleTimer(int todoId) {
+    setState(() {
+      if (_isRunning[todoId] == true) {
+        // 타이머 정지
+        _timers[todoId]?.cancel();
+        _isRunning[todoId] = false;
+      } else {
+        // 타이머 시작
+        _isRunning[todoId] = true;
+        _timers[todoId] = Timer.periodic(Duration(seconds: 1), (timer) {
+          setState(() {
+            _elapsedTimes[todoId] =
+                (_elapsedTimes[todoId] ?? Duration.zero) + Duration(seconds: 1);
+          });
+        });
+      }
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return '${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
+  }
+
   Future<void> fetchTodos() async {
     String endpoint;
     if (_selectedPeriod == 'today') {
@@ -61,9 +103,15 @@ class _TodoScreenState extends State<TodoScreen> {
             List<Map<String, dynamic>>.from(json.decode(response.body));
         setState(() {
           _todos = data;
+          for (var todo in _todos) {
+            _elapsedTimes[todo['id']] ??= Duration.zero;
+            _isRunning[todo['id']] ??= false;
+          }
+          _todos.sort(
+              (a, b) => (a['completed'] ? 1 : 0) - (b['completed'] ? 1 : 0));
           _completedCount =
-              data.where((item) => item['completed'] == true).length;
-          _totalCount = data.length;
+              _todos.where((item) => item['completed'] == true).length;
+          _totalCount = _todos.length;
         });
       } else {
         print('Failed to fetch todos. Status code: ${response.statusCode}');
@@ -274,12 +322,34 @@ class _TodoScreenState extends State<TodoScreen> {
                               },
                             ),
                             title: Text(todo['name']),
-                            subtitle: Text(todo['end_date']),
-                            trailing: IconButton(
-                              icon: Icon(Icons.timer, color: Colors.orange),
-                              onPressed: () {
-                                // 시계 아이콘 상호작용 (추후 구현)
-                              },
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(todo['end_date']),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Time: ${_formatDuration(_elapsedTimes[todo['id']] ?? Duration.zero)}',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    _isRunning[todo['id']] == true
+                                        ? Icons.pause
+                                        : Icons.play_arrow,
+                                    color: Colors.orange,
+                                  ),
+                                  onPressed: () => _toggleTimer(todo['id']),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.refresh, color: Colors.blue),
+                                  onPressed: () => _resetTimer(todo['id']),
+                                ),
+                              ],
                             ),
                           ),
                         );

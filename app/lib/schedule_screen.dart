@@ -3,6 +3,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'todo_screen.dart';
+import 'settings_screen.dart';
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -118,8 +119,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
-                      print('Settings pressed');
+                      Navigator.pop(context); // Modal 창 닫기
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              SettingsScreen(userId: widget.userId), // 설정창 이동
+                        ),
+                      );
                     },
                     child: Text('Settings'),
                   ),
