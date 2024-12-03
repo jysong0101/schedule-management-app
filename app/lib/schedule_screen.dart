@@ -447,22 +447,24 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ],
                       ),
                       SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () async {
-                          if (nameController.text.isNotEmpty) {
-                            await _addSchedule(
-                              nameController.text,
-                              startDate ?? DateTime.now(),
-                              endDate ?? DateTime.now(),
-                              detailsController.text,
-                            );
-                            // ToDoScreen 상태 새로고침
-                            await todoScreen
-                                .fetchTodos(); // todoScreen의 fetchTodos 호출
-                            Navigator.pop(context);
-                          }
-                        },
-                        child: Text('일정 추가'),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (nameController.text.isNotEmpty) {
+                              await _addSchedule(
+                                nameController.text,
+                                startDate ?? DateTime.now(),
+                                endDate ?? DateTime.now(),
+                                detailsController.text,
+                              );
+                              // ToDoScreen 상태 새로고침
+                              await todoScreen
+                                  .fetchTodos(); // todoScreen의 fetchTodos 호출
+                              Navigator.pop(context);
+                            }
+                          },
+                          child: Text('일정 추가'),
+                        ),
                       ),
                     ],
                   ),
