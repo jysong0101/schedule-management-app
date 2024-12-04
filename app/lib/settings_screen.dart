@@ -97,13 +97,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     SizedBox(height: 30),
                     // 알림 허용 스위치
-                    SwitchListTile(
-                      title: Text('알림 전체 허용'),
-                      value: true,
-                      onChanged: (bool value) {
-                        // 스위치 상태 변경 처리
-                      },
-                    ),
+                    // SwitchListTile(
+                    //   title: Text('알림 전체 허용'),
+                    //   value: true,
+                    //   onChanged: (bool value) {
+                    //     // 스위치 상태 변경 처리
+                    //   },
+                    // ),
                     // 앱 잠금 스위치
                     SwitchListTile(
                       title: Text('앱 잠금'),
