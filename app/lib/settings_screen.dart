@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'login_screen.dart';
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -54,6 +55,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('로그아웃'),
+          content: Text('정말로 로그아웃 하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 팝업 닫기
+              },
+              child: Text('아니오'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // 팝업 닫기
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                  (Route<dynamic> route) => false, // 이전 화면을 모두 제거
+                );
+              },
+              child: Text(
+                '예',
+                style: TextStyle(color: Colors.red), // "예" 버튼 강조
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -163,6 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     SizedBox(height: 30),
                     // 로그아웃 버튼
+                    // 로그아웃 버튼
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
@@ -172,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               horizontal: 40, vertical: 12),
                         ),
                         onPressed: () {
-                          // 로그아웃 버튼 동작
+                          _showLogoutConfirmation(context); // 로그아웃 확인 팝업 호출
                         },
                         child: Text(
                           'Logout',

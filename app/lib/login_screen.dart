@@ -66,13 +66,13 @@ class LoginScreen extends StatelessWidget {
                     );
                   } else {
                     // 에러 처리: 팝업으로 알림
-                    _showErrorDialog(context, 'Login Failed',
-                        'Incorrect password. Please try again.');
+                    _showErrorDialog(context, '로그인 실패',
+                        '정확하지 않은 User ID 또는 Password입니다.\n다시 시도해주세요.');
                   }
                 } else {
                   // 필드 비어있는 경우 처리
-                  _showErrorDialog(context, 'Invalid Input',
-                      'Please enter both User ID and Password.');
+                  _showErrorDialog(
+                      context, '입력 오류', 'User ID 와 Password를 입력해주세요.');
                 }
               },
               child: Text('Login'),

@@ -251,8 +251,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   SizedBox(height: 16),
                   _buildInfoBox('종료 날짜', schedule['end_date']),
                   SizedBox(height: 24),
-
-                  // 하단의 삭제 버튼
                   Align(
                     alignment: Alignment.bottomRight,
                     child: ElevatedButton(
@@ -261,11 +259,25 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor:
+                            const Color.fromARGB(255, 214, 70, 59), // 버튼 배경 색상
                         padding:
                             EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(8.0), // 버튼의 테두리 모서리 둥글기
+                          side: BorderSide(
+                              color: Colors.black, width: 1), // 테두리 색상 및 두께
+                        ),
                       ),
-                      child: Text('일정 삭제', style: TextStyle(fontSize: 16)),
+                      child: Text(
+                        '일정 삭제',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white, // 폰트 색상
+                          fontWeight: FontWeight.bold, // 폰트 두께
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -49,6 +49,28 @@ class _TodoScreenState extends State<TodoScreen> {
     super.dispose();
   }
 
+  void _deleteTodo(int todoId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/schedule/$todoId'), // 서버 API 경로
+      );
+
+      if (response.statusCode == 200) {
+        print('Todo deleted successfully.');
+        setState(() {
+          _todos.removeWhere((todo) => todo['id'] == todoId);
+          _completedCount =
+              _todos.where((item) => item['completed'] == true).length;
+          _totalCount = _todos.length;
+        });
+      } else {
+        print('Failed to delete todo. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error deleting todo: $e');
+    }
+  }
+
   void _resetTimer(int todoId) {
     setState(() {
       _timers[todoId]?.cancel(); // 타이머 중지
@@ -154,7 +176,6 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  // 일정 상세 정보 표시
   void _showScheduleDetailsModal(Map<String, dynamic> todo) {
     showModalBottomSheet(
       context: context,
@@ -191,14 +212,29 @@ class _TodoScreenState extends State<TodoScreen> {
                     alignment: Alignment.bottomRight,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        _deleteTodo(todo['id']); // 일정 삭제 메서드 호출
+                        Navigator.pop(context); // 모달 닫기
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor:
+                            const Color.fromARGB(255, 214, 70, 59), // 버튼 배경 색상
                         padding:
                             EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(8.0), // 버튼의 테두리 모서리 둥글기
+                          side: BorderSide(
+                              color: Colors.black, width: 1), // 테두리 색상 및 두께
+                        ),
                       ),
-                      child: Text('닫기', style: TextStyle(fontSize: 16)),
+                      child: Text(
+                        '일정 삭제',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white, // 폰트 색상
+                          fontWeight: FontWeight.bold, // 폰트 두께
+                        ),
+                      ),
                     ),
                   ),
                 ],
