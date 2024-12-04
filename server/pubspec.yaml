@@ -8,3 +8,4 @@ environment:
 dependencies:
   shelf: ^1.4.0
   sqlite3: ^1.4.0
+  crypto: ^3.0.1

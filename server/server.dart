@@ -4,6 +4,8 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:sqlite3/sqlite3.dart';
 import 'time_controller.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 import 'user_controller.dart';
 import 'schedule_controller.dart';
 import 'docs_handler.dart';
@@ -58,7 +60,9 @@ void initializeDatabase(Database db) {
   db.execute('''
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL
+      name TEXT NOT NULL,
+      password TEXT NOT NULL, -- 비밀번호 저장
+      backup_email TEXT NOT NULL -- 비밀번호 분실 대비 이메일
     );
   ''');
 
@@ -83,15 +87,30 @@ void insertInitialData(Database db) {
   // 사용자 데이터가 이미 있는지 확인
   final existingUsers = db.select('SELECT COUNT(*) AS count FROM users');
   if (existingUsers.first['count'] == 0) {
-    // 사용자 추가
+    // 해싱된 "fortest" 비밀번호 생성
+    final hashedPassword = sha256.convert(utf8.encode("fortest")).toString();
+
+    // 초기 사용자 추가
     final users = [
-      {'id': 'user1', 'name': 'Alice'},
-      {'id': 'user2', 'name': 'Bob'}
+      {
+        'id': 'user1',
+        'name': 'Alice',
+        'password': hashedPassword,
+        'backup_email': 'alice@example.com'
+      },
+      {
+        'id': 'user2',
+        'name': 'Bob',
+        'password': hashedPassword,
+        'backup_email': 'bob@example.com'
+      }
     ];
 
     for (var user in users) {
-      db.execute('INSERT INTO users (id, name) VALUES (?, ?)',
-          [user['id'], user['name']]);
+      db.execute('''
+        INSERT INTO users (id, name, password, backup_email)
+        VALUES (?, ?, ?, ?)
+      ''', [user['id'], user['name'], user['password'], user['backup_email']]);
     }
   }
 
@@ -126,7 +145,11 @@ void insertInitialData(Database db) {
 }
 
 FutureOr<Response> router(Request request, Database database) {
-  if (request.url.path == 'time') {
+  if (request.url.path == 'create-account' && request.method == 'POST') {
+    return handleCreateAccount(request, database); // 계정 생성 API
+  } else if (request.url.path == 'login' && request.method == 'POST') {
+    return handleLogin(request, database); // 로그인 API
+  } else if (request.url.path == 'time') {
     return handleTimeRequest(request);
   } else if (request.url.path == 'user' && request.method == 'POST') {
     return handleAddUserRequest(request, database);

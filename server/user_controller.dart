@@ -63,3 +63,60 @@ Future<Response> handleGetUserNameByIdRequest(
     return Response.internalServerError(body: 'Database error: $e');
   }
 }
+
+/// 계정 생성 API
+Future<Response> handleCreateAccount(Request request, Database db) async {
+  final payload = await request.readAsString();
+  final data = jsonDecode(payload);
+
+  final userId = data['id'];
+  final name = data['name'];
+  final password = data['password']; // 해싱된 비밀번호
+  final backupEmail = data['backup_email'];
+
+  if (userId == null ||
+      name == null ||
+      password == null ||
+      backupEmail == null) {
+    return Response.badRequest(body: 'Missing required fields');
+  }
+
+  try {
+    db.execute('''
+      INSERT INTO users (id, name, password, backup_email)
+      VALUES (?, ?, ?, ?)
+    ''', [userId, name, password, backupEmail]);
+
+    return Response.ok('Account created successfully');
+  } catch (e) {
+    return Response.badRequest(body: 'User ID already exists');
+  }
+}
+
+/// 로그인 API
+Future<Response> handleLogin(Request request, Database db) async {
+  final payload = await request.readAsString();
+  final data = jsonDecode(payload);
+
+  final userId = data['id'];
+  final password = data['password']; // 클라이언트에서 해싱된 비밀번호 제공
+
+  if (userId == null || password == null) {
+    return Response.badRequest(body: 'Missing user ID or password');
+  }
+
+  final result = db.select('''
+    SELECT password FROM users WHERE id = ?
+  ''', [userId]);
+
+  if (result.isEmpty) {
+    return Response.notFound('User not found');
+  }
+
+  final storedPassword = result.first['password'];
+  if (storedPassword != password) {
+    return Response.forbidden('Invalid password');
+  }
+
+  return Response.ok('Login successful');
+}
