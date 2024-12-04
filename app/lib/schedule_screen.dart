@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'todo_screen.dart';
 import 'settings_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -162,8 +163,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Future<List<Map<String, dynamic>>> _fetchPriorities() async {
     try {
+      // SharedPreferences에서 저장된 Priority 범위 값을 가져옴
+      final prefs = await SharedPreferences.getInstance();
+      int priorityRange = prefs.getInt('selectedPriorityRange') ?? 3; // 기본값 3일
+      priorityRange--; // 오늘을 포함하기 위해 하루 빼기
+
       final response = await http.get(
-        Uri.parse('$baseUrl/priorities?user_id=${widget.userId}&x=3'),
+        Uri.parse(
+            '$baseUrl/priorities?user_id=${widget.userId}&x=$priorityRange'),
       );
 
       if (response.statusCode == 200) {

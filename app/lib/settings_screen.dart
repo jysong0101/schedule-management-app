@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'login_screen.dart';
 import 'password_change_screen.dart'; // Add this import statement
 import 'profile_edit_screen.dart'; // Add this import statement
+import 'package:shared_preferences/shared_preferences.dart'; // Add this import statement
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -19,11 +20,27 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String? _username; // 사용자 이름 저장 변수
   bool _isLoading = true; // 로딩 상태
-
+  int selectedPriorityRange = 3; // 초깃값 설정
   @override
   void initState() {
     super.initState();
     _fetchUsername(); // username 가져오기
+    _loadPriorityRange(); // 저장된 Priority 범위를 로드
+  }
+
+// Priority 범위 저장
+  Future<void> _savePriorityRange(int range) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selectedPriorityRange', range);
+  }
+
+  // Priority 범위 불러오기
+  Future<void> _loadPriorityRange() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedPriorityRange =
+          prefs.getInt('selectedPriorityRange') ?? 3; // 기본값 3
+    });
   }
 
   // 사용자 이름을 서버에서 가져오는 함수
@@ -198,19 +215,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                     ),
-                    // Priorities 범위
+                    // Priorities 범위 설정
                     ListTile(
                       title: Text('Priorities 범위'),
-                      trailing: DropdownButton<String>(
-                        value: '3일',
-                        items: ['3일', '7일', '30일']
-                            .map((String value) => DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value),
-                                ))
-                            .toList(),
-                        onChanged: (String? value) {
-                          // 드롭다운 변경 처리
+                      trailing: DropdownButton<int>(
+                        value: selectedPriorityRange,
+                        items: List.generate(
+                          5,
+                          (index) => DropdownMenuItem<int>(
+                            value: index + 1,
+                            child: Text('${index + 1}일'),
+                          ),
+                        ),
+                        onChanged: (int? value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedPriorityRange = value;
+                            });
+                            _savePriorityRange(value); // 선택한 값을 저장
+                          }
                         },
                       ),
                     ),
