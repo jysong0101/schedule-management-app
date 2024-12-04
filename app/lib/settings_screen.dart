@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'login_screen.dart';
+import 'password_change_screen.dart'; // Add this import statement
+import 'profile_edit_screen.dart'; // Add this import statement
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -121,25 +123,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              // 프로필 편집 버튼 동작
-                            },
-                            child: Text('프로필 편집'),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ProfileEditScreen(
+                                          userId: widget.userId),
+                                    ),
+                                  );
+                                },
+                                child: Text('프로필 편집'),
+                              ),
+                              SizedBox(width: 16),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          PasswordChangeScreen(
+                                              userId: widget.userId),
+                                    ),
+                                  );
+                                },
+                                child: Text('비밀번호 변경'),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
                     SizedBox(height: 30),
-                    // 알림 허용 스위치
-                    // SwitchListTile(
-                    //   title: Text('알림 전체 허용'),
-                    //   value: true,
-                    //   onChanged: (bool value) {
-                    //     // 스위치 상태 변경 처리
-                    //   },
-                    // ),
-                    // 앱 잠금 스위치
                     SwitchListTile(
                       title: Text('앱 잠금'),
                       value: false,
@@ -147,7 +165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         // 스위치 상태 변경 처리
                       },
                     ),
-                    SizedBox(height: 20),
+                    //SizedBox(height: 20),
                     // 모드 설정
                     ListTile(
                       title: Text('모드 설정'),
@@ -198,12 +216,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     SizedBox(height: 30),
                     // 로그아웃 버튼
-                    // 로그아웃 버튼
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.brown[200], // 버튼 색상
+                          backgroundColor:
+                              const Color.fromARGB(255, 190, 81, 65), // 버튼 색상
                           padding: EdgeInsets.symmetric(
                               horizontal: 40, vertical: 12),
                         ),
@@ -213,7 +231,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text(
                           'Logout',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                       ),
                     ),

@@ -553,6 +553,195 @@
           }
         }
       }
+    },
+    "/update-user-info": {
+      "post": {
+        "summary": "Update user information",
+        "description": "Allows updating a user's name and backup email using their user ID.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "description": "User ID" },
+                  "name": { "type": "string", "description": "New user name" },
+                  "backup_email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "New backup email"
+                  }
+                },
+                "required": ["id", "name", "backup_email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User information updated successfully"
+          },
+          "400": {
+            "description": "Missing required fields or invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Error message" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": { "type": "string", "description": "Error message" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get-user-info": {
+      "get": {
+        "summary": "Get user information",
+        "description": "Retrieves user information (excluding password) by user ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "description": "User ID" },
+                    "name": { "type": "string", "description": "User name" },
+                    "backup_email": {
+                      "type": "string",
+                      "format": "email",
+                      "description": "Backup email"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Missing user ID",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": { "type": "string", "description": "Error message" }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": { "type": "string", "description": "Error message" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/update-password": {
+      "post": {
+        "summary": "Update user password",
+        "description": "Updates a user's password by verifying their old password.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string", "description": "User ID" },
+                  "old_password": {
+                    "type": "string",
+                    "description": "Hashed old password"
+                  },
+                  "new_password": {
+                    "type": "string",
+                    "description": "Hashed new password"
+                  }
+                },
+                "required": ["id", "old_password", "new_password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated successfully"
+          },
+          "400": {
+            "description": "Missing required fields or invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Error message" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Old password is incorrect",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": { "type": "string", "description": "Error message" }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": { "type": "string", "description": "Error message" }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

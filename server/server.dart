@@ -197,6 +197,14 @@ FutureOr<Response> router(Request request, Database database) {
     return handleGetThisWeekTodos(request, database);
   } else if (request.url.path == 'todo/month' && request.method == 'GET') {
     return handleGetThisMonthTodos(request, database);
+  } else if (request.url.path == 'update-user-info' &&
+      request.method == 'POST') {
+    return handleUpdateUserInfo(request, database); // 유저 정보 변경 API
+  } else if (request.url.path == 'get-user-info' && request.method == 'GET') {
+    return handleGetUserInfo(request, database); // 유저 정보 조회 API
+  } else if (request.url.path == 'update-password' &&
+      request.method == 'POST') {
+    return handleUpdatePassword(request, database); // 비밀번호 변경 API
   }
 
   return Response.notFound('Not Found');

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 Future<Response> handleAddUserRequest(Request request, Database db) async {
   final payload = await request.readAsString();
@@ -119,4 +121,111 @@ Future<Response> handleLogin(Request request, Database db) async {
   }
 
   return Response.ok('Login successful');
+}
+
+Future<Response> handleUpdateUserInfo(Request request, Database db) async {
+  try {
+    final payload = await request.readAsString();
+    final data = jsonDecode(payload);
+
+    final userId = data['id'];
+    final newName = data['name'];
+    final newBackupEmail = data['backup_email'];
+
+    if (userId == null || newName == null || newBackupEmail == null) {
+      return Response.badRequest(body: 'Missing required fields');
+    }
+
+    // 사용자 존재 여부 확인
+    final existingUser =
+        db.select('SELECT id FROM users WHERE id = ?', [userId]);
+    if (existingUser.isEmpty) {
+      return Response.notFound('User not found');
+    }
+
+    // 사용자 정보 업데이트
+    db.execute('''
+      UPDATE users
+      SET name = ?, backup_email = ?
+      WHERE id = ?
+    ''', [newName, newBackupEmail, userId]);
+
+    return Response.ok('User information updated successfully');
+  } catch (e) {
+    return Response.internalServerError(body: 'Error updating user info: $e');
+  }
+}
+
+Future<Response> handleGetUserInfo(Request request, Database db) async {
+  try {
+    final userId = request.url.queryParameters['id'];
+    if (userId == null) {
+      return Response.badRequest(body: 'Missing user ID');
+    }
+
+    // 사용자 정보 조회
+    final result = db.select('''
+      SELECT id, name, backup_email
+      FROM users
+      WHERE id = ?
+    ''', [userId]);
+
+    if (result.isEmpty) {
+      return Response.notFound('User not found');
+    }
+
+    // 결과 반환
+    final user = result.first;
+    return Response.ok(
+      jsonEncode({
+        'id': user['id'],
+        'name': user['name'],
+        'backup_email': user['backup_email'],
+      }),
+      headers: {'Content-Type': 'application/json'},
+    );
+  } catch (e) {
+    return Response.internalServerError(body: 'Error fetching user info: $e');
+  }
+}
+
+Future<Response> handleUpdatePassword(Request request, Database db) async {
+  try {
+    final payload = await request.readAsString();
+    final data = jsonDecode(payload);
+
+    final userId = data['id'];
+    final oldPassword = data['old_password'];
+    final newPassword = data['new_password'];
+
+    if (userId == null || oldPassword == null || newPassword == null) {
+      return Response.badRequest(body: 'Missing required fields');
+    }
+
+    // 기존 비밀번호 확인
+    final result =
+        db.select('SELECT password FROM users WHERE id = ?', [userId]);
+    if (result.isEmpty) {
+      return Response.notFound('User not found');
+    }
+
+    final existingPassword = result.first['password'];
+    if (existingPassword !=
+        sha256.convert(utf8.encode(oldPassword)).toString()) {
+      return Response.forbidden('Old password is incorrect');
+    }
+
+    // 새로운 비밀번호 해싱 및 업데이트
+    final hashedNewPassword =
+        sha256.convert(utf8.encode(newPassword)).toString();
+    db.execute('''
+      UPDATE users
+      SET password = ?
+      WHERE id = ?
+    ''', [hashedNewPassword, userId]);
+
+    return Response.ok('Password updated successfully');
+  } catch (e) {
+    return Response.internalServerError(body: 'Error updating password: $e');
+  }
 }

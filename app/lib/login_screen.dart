@@ -66,7 +66,7 @@ class LoginScreen extends StatelessWidget {
                     );
                   } else {
                     // 에러 처리: 팝업으로 알림
-                    _showErrorDialog(context, '로그인 실패',
+                    _showErrorDialog(context, '로그인 실패!',
                         '정확하지 않은 User ID 또는 Password입니다.\n다시 시도해주세요.');
                   }
                 } else {
