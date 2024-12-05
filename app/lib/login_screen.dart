@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'schedule_screen.dart';
 import 'signup_screen.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // for utf8.encode
-import 'package:crypto/crypto.dart'; // for sha256
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -36,7 +36,7 @@ class LoginScreen extends StatelessWidget {
                 labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
-              obscureText: true, // 비밀번호 입력 시 텍스트 숨김 처리
+              obscureText: true,
             ),
             SizedBox(height: 16.0),
             ElevatedButton(
@@ -45,11 +45,9 @@ class LoginScreen extends StatelessWidget {
                 final password = _passwordController.text.trim();
 
                 if (userId.isNotEmpty && password.isNotEmpty) {
-                  // 비밀번호 해싱
                   final hashedPassword =
                       sha256.convert(utf8.encode(password)).toString();
 
-                  // 서버로 로그인 요청
                   final response = await http.post(
                     Uri.parse('$baseUrl/login'),
                     headers: {'Content-Type': 'application/json'},
@@ -65,7 +63,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                     );
                   } else {
-                    // 에러 처리: 팝업으로 알림
+                    // 로그인 실패 처리
                     _showErrorDialog(context, '로그인 실패!',
                         '정확하지 않은 User ID 또는 Password입니다.\n다시 시도해주세요.');
                   }
@@ -80,7 +78,6 @@ class LoginScreen extends StatelessWidget {
             SizedBox(height: 16.0),
             TextButton(
               onPressed: () {
-                // 회원가입 화면으로 이동
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -105,7 +102,7 @@ class LoginScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // 팝업 닫기
+              Navigator.pop(context);
             },
             child: Text('OK'),
           ),

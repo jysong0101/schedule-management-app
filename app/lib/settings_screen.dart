@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'login_screen.dart';
-import 'password_change_screen.dart'; // Add this import statement
-import 'profile_edit_screen.dart'; // Add this import statement
-import 'package:shared_preferences/shared_preferences.dart'; // Add this import statement
+import 'password_change_screen.dart';
+import 'profile_edit_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
 
@@ -18,48 +18,45 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String? _username; // 사용자 이름 저장 변수
-  bool _isLoading = true; // 로딩 상태
-  int selectedPriorityRange = 3; // 초깃값 설정
+  String? _username;
+  bool _isLoading = true;
+  int selectedPriorityRange = 3;
+
   @override
   void initState() {
     super.initState();
-    _fetchUsername(); // username 가져오기
-    _loadPriorityRange(); // 저장된 Priority 범위를 로드
+    _fetchUsername();
+    _loadPriorityRange();
   }
 
-// Priority 범위 저장
   Future<void> _savePriorityRange(int range) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('selectedPriorityRange', range);
   }
 
-  // Priority 범위 불러오기
   Future<void> _loadPriorityRange() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      selectedPriorityRange =
-          prefs.getInt('selectedPriorityRange') ?? 3; // 기본값 3
+      selectedPriorityRange = prefs.getInt('selectedPriorityRange') ?? 3;
     });
   }
 
-  // 사용자 이름을 서버에서 가져오는 함수
   Future<void> _fetchUsername() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/user/name?id=${widget.userId}'), // API 명세에 따른 요청
+        Uri.parse('$baseUrl/user/name?id=${widget.userId}'),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          _username = data['name']; // API 응답에서 'name' 값을 사용
+          _username = data['name'];
           _isLoading = false;
         });
       } else if (response.statusCode == 400 || response.statusCode == 404) {
         final data = json.decode(response.body);
         setState(() {
-          _username = data['error']; // 에러 메시지 표시
+          _username = data['error'];
           _isLoading = false;
         });
       } else {
@@ -86,22 +83,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // 팝업 닫기
+                Navigator.of(context).pop();
               },
               child: Text('아니오'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // 팝업 닫기
+                Navigator.of(context).pop();
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginScreen()),
-                  (Route<dynamic> route) => false, // 이전 화면을 모두 제거
+                  (Route<dynamic> route) => false,
                 );
               },
               child: Text(
                 '예',
-                style: TextStyle(color: Colors.red), // "예" 버튼 강조
+                style: TextStyle(color: Colors.red),
               ),
             ),
           ],
@@ -118,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator()) // 로딩 중 상태
+          ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -135,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           SizedBox(height: 16),
                           Text(
-                            _username ?? '알 수 없음', // 가져온 username 표시
+                            _username ?? '알 수 없음',
                             style: TextStyle(
                                 fontSize: 20, fontWeight: FontWeight.bold),
                           ),
@@ -182,7 +179,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         // 스위치 상태 변경 처리
                       },
                     ),
-                    //SizedBox(height: 20),
                     // 모드 설정
                     ListTile(
                       title: Text('모드 설정'),
@@ -232,7 +228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             setState(() {
                               selectedPriorityRange = value;
                             });
-                            _savePriorityRange(value); // 선택한 값을 저장
+                            _savePriorityRange(value);
                           }
                         },
                       ),
@@ -244,12 +240,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              const Color.fromARGB(255, 190, 81, 65), // 버튼 색상
+                              const Color.fromARGB(255, 190, 81, 65),
                           padding: EdgeInsets.symmetric(
                               horizontal: 40, vertical: 12),
                         ),
                         onPressed: () {
-                          _showLogoutConfirmation(context); // 로그아웃 확인 팝업 호출
+                          _showLogoutConfirmation(context);
                         },
                         child: Text(
                           'Logout',

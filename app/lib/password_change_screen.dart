@@ -1,4 +1,3 @@
-// password_change_screen.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -40,7 +39,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
       );
 
       if (response.statusCode == 200) {
-        Navigator.pop(context, true); // 성공 시 이전 화면으로 돌아가기
+        Navigator.pop(context, true);
       } else {
         final data = json.decode(response.body);
         if (response.statusCode == 400 &&
@@ -114,12 +113,12 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context); // 취소 버튼
+                    Navigator.pop(context);
                   },
                   child: Text('취소'),
                 ),
                 ElevatedButton(
-                  onPressed: _updatePassword, // 저장 버튼
+                  onPressed: _updatePassword,
                   child: Text('저장'),
                 ),
               ],

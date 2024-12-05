@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(), // LoginScreen으로 첫 화면 설정
+      home: LoginScreen(),
     );
   }
 }

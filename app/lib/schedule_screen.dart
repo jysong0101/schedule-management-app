@@ -18,17 +18,16 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  int _currentIndex = 0; // 화면 전환을 위한 상태 변수
+  int _currentIndex = 0;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<Map<String, dynamic>> _schedules = [];
-
-  late TodoScreen todoScreen; // TodoScreen 인스턴스 선언
+  late TodoScreen todoScreen;
 
   @override
   void initState() {
     super.initState();
-    todoScreen = TodoScreen(userId: widget.userId); // TodoScreen 초기화
+    todoScreen = TodoScreen(userId: widget.userId);
     _fetchSchedulesForDate(DateTime.now());
   }
 
@@ -63,8 +62,8 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
       builder: (BuildContext context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.6, // 화면 높이의 60%로 제한
-          padding: const EdgeInsets.all(30.0), // 여백을 추가
+          height: MediaQuery.of(context).size.height * 0.6,
+          padding: const EdgeInsets.all(30.0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +91,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 8),
-                // 완료되지 않은 Priority만 표시
                 ...priorities
                     .where((priority) => !(priority['completed'] ?? false))
                     .map((priority) {
@@ -120,12 +118,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context); // Modal 창 닫기
+                      Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              SettingsScreen(userId: widget.userId), // 설정창 이동
+                              SettingsScreen(userId: widget.userId),
                         ),
                       );
                     },
@@ -163,10 +161,9 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
   Future<List<Map<String, dynamic>>> _fetchPriorities() async {
     try {
-      // SharedPreferences에서 저장된 Priority 범위 값을 가져옴
       final prefs = await SharedPreferences.getInstance();
-      int priorityRange = prefs.getInt('selectedPriorityRange') ?? 3; // 기본값 3일
-      priorityRange--; // 오늘을 포함하기 위해 하루 빼기
+      int priorityRange = prefs.getInt('selectedPriorityRange') ?? 3;
+      priorityRange--;
 
       final response = await http.get(
         Uri.parse(
@@ -232,7 +229,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       ),
       builder: (context) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.6, // 화면 높이의 60%
+          height: MediaQuery.of(context).size.height * 0.6,
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             top: 16,
@@ -244,14 +241,11 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 큰 글씨로 일정 이름 표시
                   Text(
                     schedule['name'],
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 24),
-
-                  // 각 정보들을 박스로 감싸서 표시
                   _buildInfoBox('설명', schedule['details'] ?? '없음'),
                   SizedBox(height: 16),
                   _buildInfoBox('시작 날짜', schedule['start_date']),
@@ -266,23 +260,20 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 214, 70, 59), // 버튼 배경 색상
+                        backgroundColor: const Color.fromARGB(255, 214, 70, 59),
                         padding:
                             EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(8.0), // 버튼의 테두리 모서리 둥글기
-                          side: BorderSide(
-                              color: Colors.black, width: 1), // 테두리 색상 및 두께
+                          borderRadius: BorderRadius.circular(8.0),
+                          side: BorderSide(color: Colors.black, width: 1),
                         ),
                       ),
                       child: Text(
                         '일정 삭제',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white, // 폰트 색상
-                          fontWeight: FontWeight.bold, // 폰트 두께
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),

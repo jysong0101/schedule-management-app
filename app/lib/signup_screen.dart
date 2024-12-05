@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:crypto/crypto.dart'; // for sha256
+import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
 const String baseUrl = 'https://physically-legible-bengal.ngrok-free.app';
@@ -80,11 +80,9 @@ class SignupScreen extends StatelessWidget {
                     email.isNotEmpty &&
                     password.isNotEmpty &&
                     password == confirmPassword) {
-                  // 비밀번호 해싱
                   final hashedPassword =
                       sha256.convert(utf8.encode(password)).toString();
 
-                  // 서버로 회원가입 요청
                   final response = await http.post(
                     Uri.parse('$baseUrl/create-account'),
                     headers: {'Content-Type': 'application/json'},
@@ -97,12 +95,11 @@ class SignupScreen extends StatelessWidget {
                   );
 
                   if (response.statusCode == 200) {
-                    Navigator.pop(context); // 성공 시 로그인 화면으로 돌아가기
+                    Navigator.pop(context);
                   } else {
                     print('Signup failed: ${response.body}');
                   }
                 } else {
-                  // 에러 처리: 입력값 검증 실패
                   if (password != confirmPassword) {
                     print('Passwords do not match');
                   } else {

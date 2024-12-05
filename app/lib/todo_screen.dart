@@ -11,7 +11,7 @@ class TodoScreen extends StatefulWidget {
 
   TodoScreen({required this.userId});
 
-  // fetchTodos를 외부에서 호출할 수 있도록 public 메서드 추가
+  // 외부 호출 용도
   Future<void> fetchTodos() async {
     final state = _TodoScreenState.currentState;
     if (state != null) {
@@ -24,14 +24,14 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  String _selectedPeriod = 'today'; // 현재 선택된 기간 (today, week, month)
-  List<Map<String, dynamic>> _todos = []; // 불러온 일정 데이터
-  int _completedCount = 0; // 완료된 일정 개수
-  int _totalCount = 0; // 전체 일정 개수
-  static _TodoScreenState? currentState; // 현재 상태를 추적하기 위한 정적 변수
-  Map<int, Timer?> _timers = {}; // 각 todo의 타이머
-  Map<int, Duration> _elapsedTimes = {}; // 각 todo의 경과 시간
-  Map<int, bool> _isRunning = {}; // 각 todo 타이머 실행 여부
+  String _selectedPeriod = 'today';
+  List<Map<String, dynamic>> _todos = [];
+  int _completedCount = 0;
+  int _totalCount = 0;
+  static _TodoScreenState? currentState;
+  Map<int, Timer?> _timers = {};
+  Map<int, Duration> _elapsedTimes = {};
+  Map<int, bool> _isRunning = {};
 
   @override
   void initState() {
@@ -52,7 +52,7 @@ class _TodoScreenState extends State<TodoScreen> {
   void _deleteTodo(int todoId) async {
     try {
       final response = await http.delete(
-        Uri.parse('$baseUrl/schedule/$todoId'), // 서버 API 경로
+        Uri.parse('$baseUrl/schedule/$todoId'),
       );
 
       if (response.statusCode == 200) {
@@ -73,9 +73,9 @@ class _TodoScreenState extends State<TodoScreen> {
 
   void _resetTimer(int todoId) {
     setState(() {
-      _timers[todoId]?.cancel(); // 타이머 중지
-      _elapsedTimes[todoId] = Duration.zero; // 경과 시간 초기화
-      _isRunning[todoId] = false; // 실행 상태 초기화
+      _timers[todoId]?.cancel();
+      _elapsedTimes[todoId] = Duration.zero;
+      _isRunning[todoId] = false;
     });
   }
 
@@ -148,14 +148,13 @@ class _TodoScreenState extends State<TodoScreen> {
       print('Toggling completion for schedule ID: $scheduleId');
 
       final response = await http.patch(
-        Uri.parse('$baseUrl/schedule/$scheduleId/toggle'), // 수정된 경로
+        Uri.parse('$baseUrl/schedule/$scheduleId/toggle'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'completed': isCompleted}),
       );
 
       if (response.statusCode == 200) {
         print('Schedule completion toggled successfully.');
-        // 로컬 상태 업데이트
         setState(() {
           final index = _todos.indexWhere((todo) => todo['id'] == scheduleId);
           if (index != -1) {
@@ -212,27 +211,24 @@ class _TodoScreenState extends State<TodoScreen> {
                     alignment: Alignment.bottomRight,
                     child: ElevatedButton(
                       onPressed: () {
-                        _deleteTodo(todo['id']); // 일정 삭제 메서드 호출
-                        Navigator.pop(context); // 모달 닫기
+                        _deleteTodo(todo['id']);
+                        Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            const Color.fromARGB(255, 214, 70, 59), // 버튼 배경 색상
+                        backgroundColor: const Color.fromARGB(255, 214, 70, 59),
                         padding:
                             EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(8.0), // 버튼의 테두리 모서리 둥글기
-                          side: BorderSide(
-                              color: Colors.black, width: 1), // 테두리 색상 및 두께
+                          borderRadius: BorderRadius.circular(8.0),
+                          side: BorderSide(color: Colors.black, width: 1),
                         ),
                       ),
                       child: Text(
                         '일정 삭제',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white, // 폰트 색상
-                          fontWeight: FontWeight.bold, // 폰트 두께
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -347,12 +343,10 @@ class _TodoScreenState extends State<TodoScreen> {
                               value: todo['completed'],
                               onChanged: (bool? value) {
                                 if (value != null) {
-                                  // 로컬 상태 즉시 업데이트
                                   setState(() {
                                     todo['completed'] = value;
                                   });
 
-                                  // 서버로 상태 전송
                                   _toggleCompletion(todo['id'], value);
                                 }
                               },
@@ -403,7 +397,7 @@ class _TodoScreenState extends State<TodoScreen> {
       onPressed: () {
         setState(() {
           _selectedPeriod = period;
-          fetchTodos(); // 데이터 새로고침
+          fetchTodos();
         });
       },
       style: ElevatedButton.styleFrom(
