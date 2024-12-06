@@ -15,7 +15,6 @@ Future<Response> handleAddUserRequest(Request request, Database db) async {
     return Response.badRequest(body: 'Missing id or name');
   }
 
-  // 데이터베이스에 사용자 추가
   try {
     db.execute('INSERT INTO users (id, name) VALUES (?, ?)', [id, name]);
   } catch (e) {
@@ -47,7 +46,6 @@ Future<Response> handleGetUserNameByIdRequest(
     return Response.badRequest(body: 'Missing or invalid user ID');
   }
 
-  // 데이터베이스에서 사용자 이름 조회
   try {
     final result = db.select(
       'SELECT name FROM users WHERE id = ?',
@@ -73,7 +71,7 @@ Future<Response> handleCreateAccount(Request request, Database db) async {
 
   final userId = data['id'];
   final name = data['name'];
-  final password = data['password']; // 해싱된 비밀번호
+  final password = data['password'];
   final backupEmail = data['backup_email'];
 
   if (userId == null ||
@@ -101,7 +99,7 @@ Future<Response> handleLogin(Request request, Database db) async {
   final data = jsonDecode(payload);
 
   final userId = data['id'];
-  final password = data['password']; // 클라이언트에서 해싱된 비밀번호 제공
+  final password = data['password'];
 
   if (userId == null || password == null) {
     return Response.badRequest(body: 'Missing user ID or password');
@@ -136,14 +134,12 @@ Future<Response> handleUpdateUserInfo(Request request, Database db) async {
       return Response.badRequest(body: 'Missing required fields');
     }
 
-    // 사용자 존재 여부 확인
     final existingUser =
         db.select('SELECT id FROM users WHERE id = ?', [userId]);
     if (existingUser.isEmpty) {
       return Response.notFound('User not found');
     }
 
-    // 사용자 정보 업데이트
     db.execute('''
       UPDATE users
       SET name = ?, backup_email = ?
@@ -163,7 +159,6 @@ Future<Response> handleGetUserInfo(Request request, Database db) async {
       return Response.badRequest(body: 'Missing user ID');
     }
 
-    // 사용자 정보 조회
     final result = db.select('''
       SELECT id, name, backup_email
       FROM users
@@ -174,7 +169,6 @@ Future<Response> handleGetUserInfo(Request request, Database db) async {
       return Response.notFound('User not found');
     }
 
-    // 결과 반환
     final user = result.first;
     return Response.ok(
       jsonEncode({
@@ -202,7 +196,6 @@ Future<Response> handleUpdatePassword(Request request, Database db) async {
       return Response.badRequest(body: 'Missing required fields');
     }
 
-    // 기존 비밀번호 확인
     final result =
         db.select('SELECT password FROM users WHERE id = ?', [userId]);
     if (result.isEmpty) {
@@ -215,7 +208,6 @@ Future<Response> handleUpdatePassword(Request request, Database db) async {
       return Response.forbidden('Old password is incorrect');
     }
 
-    // 새로운 비밀번호 해싱 및 업데이트
     final hashedNewPassword =
         sha256.convert(utf8.encode(newPassword)).toString();
     db.execute('''

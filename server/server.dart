@@ -8,7 +8,6 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'user_controller.dart';
 import 'schedule_controller.dart';
-import 'docs_handler.dart';
 import 'fortest.dart';
 import 'todo_controller.dart';
 
@@ -19,21 +18,17 @@ void main() async {
       'server_logs/${now.toIso8601String().replaceAll(':', '-')}.txt';
   final logFile = await initializeLogFile(logFileName);
 
-  // SQLite 데이터베이스 초기화
   final database = sqlite3.open('example.db');
   initializeDatabase(database);
 
-  // 요청 핸들러 생성
   var handler = const Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware((innerHandler) => (request) async {
-            // 요청 로그 작성
             final logEntry =
                 '[${DateTime.now()}] ${request.method} ${request.requestedUri}\n';
             await logFile.writeAsString(logEntry, mode: FileMode.append);
             final response = await innerHandler(request);
 
-            // 응답 로그 작성
             final responseLog =
                 '[${DateTime.now()}] Response: ${response.statusCode}\n\n';
             await logFile.writeAsString(responseLog, mode: FileMode.append);
@@ -41,7 +36,6 @@ void main() async {
           })
       .addHandler((request) => router(request, database));
 
-  // 서버 실행
   var server = await io.serve(handler, InternetAddress.anyIPv4, 8080);
   print('Server listening on port ${server.port}');
 }
@@ -56,7 +50,6 @@ Future<File> initializeLogFile(String logFileName) async {
 }
 
 void initializeDatabase(Database db) {
-  // 기존 테이블이 존재하면 유지 (삭제하지 않음)
   db.execute('''
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -84,13 +77,10 @@ void initializeDatabase(Database db) {
 }
 
 void insertInitialData(Database db) {
-  // 사용자 데이터가 이미 있는지 확인
   final existingUsers = db.select('SELECT COUNT(*) AS count FROM users');
   if (existingUsers.first['count'] == 0) {
-    // 해싱된 "fortest" 비밀번호 생성
     final hashedPassword = sha256.convert(utf8.encode("fortest")).toString();
 
-    // 초기 사용자 추가
     final users = [
       {
         'id': 'user1',
@@ -114,11 +104,9 @@ void insertInitialData(Database db) {
     }
   }
 
-  // 일정 데이터가 이미 있는지 확인
   final existingSchedules =
       db.select('SELECT COUNT(*) AS count FROM schedules');
   if (existingSchedules.first['count'] == 0) {
-    // 일정 데이터 추가
     final startDate = DateTime(2024, 11, 1);
     final endDate = DateTime(2024, 11, 30);
 
@@ -132,7 +120,6 @@ void insertInitialData(Database db) {
         final details = '$name for test';
         final dateString = date.toIso8601String().split('T').first;
 
-        // 각 사용자마다 동일한 일정을 생성
         for (var userId in ['user1', 'user2']) {
           db.execute('''
             INSERT INTO schedules (user_id, name, start_date, end_date, details, completed)
@@ -146,9 +133,9 @@ void insertInitialData(Database db) {
 
 FutureOr<Response> router(Request request, Database database) {
   if (request.url.path == 'create-account' && request.method == 'POST') {
-    return handleCreateAccount(request, database); // 계정 생성 API
+    return handleCreateAccount(request, database);
   } else if (request.url.path == 'login' && request.method == 'POST') {
-    return handleLogin(request, database); // 로그인 API
+    return handleLogin(request, database);
   } else if (request.url.path == 'time') {
     return handleTimeRequest(request);
   } else if (request.url.path == 'user' && request.method == 'POST') {
@@ -189,9 +176,7 @@ FutureOr<Response> router(Request request, Database database) {
   } else if (request.url.path == 'docs') {
     return Response.ok(File('swagger.html').readAsStringSync(),
         headers: {'Content-Type': 'text/html'});
-  }
-  // 추가된 todo API 경로
-  else if (request.url.path == 'todo/today' && request.method == 'GET') {
+  } else if (request.url.path == 'todo/today' && request.method == 'GET') {
     return handleGetTodayTodos(request, database);
   } else if (request.url.path == 'todo/week' && request.method == 'GET') {
     return handleGetThisWeekTodos(request, database);
@@ -199,12 +184,12 @@ FutureOr<Response> router(Request request, Database database) {
     return handleGetThisMonthTodos(request, database);
   } else if (request.url.path == 'update-user-info' &&
       request.method == 'POST') {
-    return handleUpdateUserInfo(request, database); // 유저 정보 변경 API
+    return handleUpdateUserInfo(request, database);
   } else if (request.url.path == 'get-user-info' && request.method == 'GET') {
-    return handleGetUserInfo(request, database); // 유저 정보 조회 API
+    return handleGetUserInfo(request, database);
   } else if (request.url.path == 'update-password' &&
       request.method == 'POST') {
-    return handleUpdatePassword(request, database); // 비밀번호 변경 API
+    return handleUpdatePassword(request, database);
   }
 
   return Response.notFound('Not Found');

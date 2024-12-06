@@ -79,7 +79,6 @@ Future<Response> handleGetThisMonthTodos(Request request, Database db) async {
       headers: {'Content-Type': 'application/json'});
 }
 
-// 일정 데이터를 JSON으로 변환하는 함수
 Map<String, dynamic> mapSchedule(Row row) {
   return {
     'id': row['id'],

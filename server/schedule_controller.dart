@@ -18,13 +18,11 @@ Future<Response> handleAddScheduleRequest(Request request, Database db) async {
     return Response.badRequest(body: 'Missing required fields');
   }
 
-  // 사용자 존재 여부 확인
   final userExists = db.select('SELECT id FROM users WHERE id = ?', [userId]);
   if (userExists.isEmpty) {
     return Response.notFound('User not found');
   }
 
-  // 일정 추가
   db.execute('''
     INSERT INTO schedules (user_id, name, start_date, end_date, details, completed)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -43,7 +41,6 @@ Future<Response> handleGetScheduleByDateRequest(
     return Response.badRequest(body: 'Missing date or user_id parameter');
   }
 
-  // 주어진 날짜가 일정의 시작 날짜와 종료 날짜 사이에 있는지 확인
   final result = db.select('''
     SELECT id, user_id, name, start_date, end_date, details, completed 
     FROM schedules
@@ -53,7 +50,7 @@ Future<Response> handleGetScheduleByDateRequest(
   final schedules = result
       .map((row) => {
             'id': row['id'],
-            'user_id': row['user_id'], // user_id 포함
+            'user_id': row['user_id'],
             'name': row['name'],
             'start_date': row['start_date'],
             'end_date': row['end_date'],
@@ -69,7 +66,6 @@ Future<Response> handleGetScheduleByDateRequest(
 /// 일정 완료 상태 토글 핸들러
 Future<Response> handleToggleScheduleCompletion(
     Request request, Database db, int id) async {
-  // 해당 id의 일정 조회
   final result =
       db.select('SELECT completed FROM schedules WHERE id = ?', [id]);
 
@@ -77,11 +73,9 @@ Future<Response> handleToggleScheduleCompletion(
     return Response.notFound('Schedule not found');
   }
 
-  // 현재 completed 상태 가져오기
   final currentCompleted = result.first['completed'] == 1;
   final newCompleted = !currentCompleted;
 
-  // completed 값을 반전하여 업데이트
   db.execute('UPDATE schedules SET completed = ? WHERE id = ?',
       [newCompleted ? 1 : 0, id]);
 
@@ -114,7 +108,7 @@ Future<Response> handleGetPrioritiesRequest(
   final schedules = result
       .map((row) => {
             'id': row['id'],
-            'user_id': row['user_id'], // user_id 포함
+            'user_id': row['user_id'],
             'name': row['name'],
             'start_date': row['start_date'],
             'end_date': row['end_date'],
@@ -130,14 +124,12 @@ Future<Response> handleGetPrioritiesRequest(
 /// 일정 삭제 핸들러
 Future<Response> handleDeleteScheduleRequest(
     Request request, Database db, int id) async {
-  // 해당 id의 일정 존재 여부 확인
   final result = db.select('SELECT * FROM schedules WHERE id = ?', [id]);
 
   if (result.isEmpty) {
     return Response.notFound('Schedule not found');
   }
 
-  // 일정 삭제
   db.execute('DELETE FROM schedules WHERE id = ?', [id]);
 
   return Response.ok('Schedule deleted successfully');
